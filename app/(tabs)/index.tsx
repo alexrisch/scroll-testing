@@ -1,70 +1,134 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { FC, useState } from "react";
+import {
+  Text,
+  SafeAreaView,
+  StyleSheet,
+  ScrollView,
+  View,
+  TouchableOpacity,
+} from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+interface Item {
+  text: string;
+  id: string;
+}
 
-export default function HomeScreen() {
+const LIST_LENGTH = 2000;
+const MAX_HEIGHT = 10;
+
+const getItems = (deletedItems: Set<string>) => {
+  const items: Item[] = [];
+  for (let i = 0; i < LIST_LENGTH; i++) {
+    const id = String(i);
+    if (deletedItems.has(id)) {
+      continue
+    }
+    const lineCount = Math.floor(Math.random() * MAX_HEIGHT) + 1;
+    let text = `Item ${i}: `;
+    for (let j = 0; j < lineCount; j++) {
+      text += "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
+    }
+    items.push({
+      text,
+      id,
+    });
+  }
+
+  return items;
+};
+
+const RenderItem: FC<{
+  item: Item;
+  index: number;
+  onPress: () => void;
+  isPressed: boolean;
+  isFocused: boolean;
+  setFocusedId: (id: string | null) => void;
+}> = ({ item, index, onPress, isPressed, isFocused, setFocusedId }) => {
+  console.log(`Rendering Item ${item.id}`);
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <TouchableOpacity
+      onPress={onPress}
+      onLongPress={() =>
+        isFocused ? setFocusedId(null) : setFocusedId(item.id)
+      }
+    >
+      <View
+        style={[
+          isPressed ? { backgroundColor: "gray" } : undefined,
+          isFocused ? { borderColor: "black", borderWidth: 1 } : undefined,
+        ]}
+      >
+        <Text style={styles.paragraph}>{item.text}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+export default function App() {
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState(new Set<string>());
+  const [deletedItems, setDeletedItems] = useState(new Set<string>());
+  const items = getItems(deletedItems);
+
+  const toggleItem = (id: string) => {
+    const newSet = new Set(selectedItems);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedItems(newSet);
+  };
+
+  const deleteItems = () => {
+    const newSet = new Set(deletedItems);
+    selectedItems.forEach((id) => newSet.add(id));
+    setDeletedItems(newSet);
+    setSelectedItems(new Set());
+  };
+
+  console.log("Rendering List");
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {selectedItems.size > 0 && (
+        <TouchableOpacity onPress={deleteItems}>
+          <Text style={[styles.paragraph, { color: "red" }]}>
+            Delete Selection {selectedItems.size}
+          </Text>
+        </TouchableOpacity>
+      )}
+      <ScrollView style={{ flex: 1 }}>
+        {items.map((item, index) => {
+          return (
+            <RenderItem
+              item={item}
+              index={index}
+              onPress={() => toggleItem(item.id)}
+              isPressed={selectedItems.has(item.id)}
+              setFocusedId={setFocusedId}
+              isFocused={focusedId === item.id}
+            />
+          );
+        })}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "#ecf0f1",
+    padding: 8,
+    marginHorizontal: 16,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  paragraph: {
+    margin: 24,
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
