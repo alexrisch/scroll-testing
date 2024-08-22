@@ -23,7 +23,8 @@ const getItems = (deletedItems: Set<string>) => {
     if (deletedItems.has(id)) {
       continue
     }
-    const lineCount = Math.floor(Math.random() * MAX_HEIGHT) + 1;
+    // const lineCount = Math.floor(Math.random() * MAX_HEIGHT) + 1;
+    const lineCount = 1;
     let text = `Item ${i}: `;
     for (let j = 0; j < lineCount; j++) {
       text += "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";
@@ -44,7 +45,7 @@ const RenderItem: FC<{
   isPressed: boolean;
   isFocused: boolean;
   setFocusedId: (id: string | null) => void;
-}> = ({ item, index, onPress, isPressed, isFocused, setFocusedId }) => {
+}> = ({ item, onPress, isPressed, isFocused, setFocusedId }) => {
   console.log(`Rendering Item ${item.id}`);
   return (
     <TouchableOpacity
